@@ -56,6 +56,10 @@ def update():
     if rc.controller.was_pressed(rc.controller.Button.X):
         drive_hallway()
 
+    # When the Y button is pressed, add instructions to drive through the obstacle "Maze"
+    if rc.controller.was_pressed(rc.controller.Button.Y):
+        drive_maze()
+
     # TODO Part 1: Analyze the following code segment that executes instructions from the queue.
     # Fill in the blanks with the missing variable assignments and indicies according to the
     # behavior described by the comment below.
@@ -130,6 +134,48 @@ def drive_hallway():
     queue.append([1, 0.75, 0.1])
     queue.append([2,0,0])
 
+# [FUNCTION] When the function is called, clear the queue, then place instructions 
+# inside of the queue that cause the RACECAR to drive in the maze
+def drive_maze():
+    global queue
+
+    # TODO Part 5: Create constants that represent the RACECAR driving through
+    # different parts of the maze, and then append the instructions in the
+    # correct order into the queue for execution
+
+    queue.clear()
+    queue.append([6.1, 1, 0]) #straight
+    queue.append([1.225, 1, -1]) #turn
+    queue.append([2.35, 1, 0]) #straight
+    queue.append([1.225, 1, -1]) #turn
+    queue.append([2.3, -1, 0]) #straight
+    queue.append([1.25, 1, 0]) #straight
+    queue.append([1.78, 1, -1]) #turn
+
+    queue.append([1.4, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([2.3, -1, 0]) #straight
+    queue.append([1.25, 1, 0]) #straight
+    queue.append([1.75, 1, 1]) #turn
+
+    queue.append([0.5, 1, 0]) #straight
+    queue.append([1.225, 1, -1]) #turn
+    
+    queue.append([0.75, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([2.3, -1, 0]) #straight
+    queue.append([1.25, 1, 0]) #straight
+    queue.append([1.75, 1, 1]) #turn
+
+    queue.append([1, 1, 0]) #straight
+    queue.append([1.225, 1, -1]) #turn
+    queue.append([2.3, -1, 0]) #straight
+    queue.append([1.25, 1, 0]) #straight
+    queue.append([1.8, 1, -1]) #turn
+
+    queue.append([2.6, 1, 0]) #straight
+
+    queue.append([2,0,0]) #stop
 
 
 ########################################################################################
