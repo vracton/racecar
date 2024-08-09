@@ -48,6 +48,14 @@ def update():
     if rc.controller.was_pressed(rc.controller.Button.A):
         drive_zigzag()
 
+    # When the B button is pressed, add instructions to drive through the obstacle "Spiral"
+    if rc.controller.was_pressed(rc.controller.Button.B):
+        drive_spiral()
+
+    # When the X button is pressed, add instructions to drive through the obstacle "Hallway"
+    if rc.controller.was_pressed(rc.controller.Button.X):
+        drive_hallway()
+
     # TODO Part 1: Analyze the following code segment that executes instructions from the queue.
     # Fill in the blanks with the missing variable assignments and indicies according to the
     # behavior described by the comment below.
@@ -78,6 +86,50 @@ def drive_zigzag():
     # TODO Part 2: Append the correct variables in the correct order in order
     # for the RACECAR to drive in the "Zigzag" obstacle course
     # [Hint] queue.append([time, speed, angle])
+
+# [FUNCTION] When the function is called, clear the queue, then place instructions 
+# inside of the queue that cause the RACECAR to drive in the spiral
+def drive_spiral():
+    global queue
+
+    # Use this section to define and tune static variables
+    
+
+    queue.clear()
+    queue.clear()
+    queue.append([4, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([3.5, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([2.6, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([1.75, 1, 0]) #straight
+    queue.append([1.225, 1, 1]) #turn
+    queue.append([0.45, 1, 0]) #straight
+    queue.append([2,0,0]) #stop
+    # TODO Part 3: Append the instructions into the queue that represent the RACECAR
+    # driving in the "Spiral" obstacle course
+    
+
+# [FUNCTION] When the function is called, clear the queue, then place instructions 
+# inside of the queue that cause the RACECAR to drive through the hallway
+def drive_hallway():
+    global queue
+
+    # TODO Part 4: Create constants that represent the RACECAR driving through
+    # the "Hallway" obstacle course, and then append the instructions in the
+    # correct order into the queue for execution
+
+    queue.clear()
+    queue.append([3, 0.75, 0.1])
+    queue.append([2, 0.75, -0.35])
+    queue.append([1.75, 0.75, 0.67])
+    queue.append([1.75, 0.75, -0.82])
+    queue.append([1.75, 0.75, 0.865])
+    queue.append([1.5, 0.75, -0.62])
+    queue.append([1, 0.75, 0.1])
+    queue.append([2,0,0])
+
 
 
 ########################################################################################
