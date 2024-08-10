@@ -27,6 +27,9 @@ BLUE = [(90, 120, 120), (120, 255, 255),"blue"]  # The HSV range for the color b
 GREEN = [(60,150,50), (80,255,255),"green"]  # The HSV range for the color green
 RED = [(0,50,50), (0,255,255),"red"]  # The HSV range for the color red
 
+# Color priority: Red >> Green >> Blue
+COLOR_PRIORITY = [BLUE, GREEN, RED, BLUE]
+
 # >> Variables
 speed = 0.0  # The current speed of the car
 angle = 0.0  # The current angle of the car's wheels
@@ -41,7 +44,6 @@ cur = 0
 
 # [FUNCTION] Finds contours in the current color image and uses them to update 
 # contour_center and contour_area
-speedMult = 1
 def update_contour():
     global contour_center
     global contour_area
@@ -50,7 +52,9 @@ def update_contour():
 
     image = rc.camera.get_color_image()
     allContours = []
+    nextContours = []
     contour_area = 0
+    ncontour_area = 0
     contour_center = (240,320)
     if image is None:
         contour_center = None
@@ -59,18 +63,37 @@ def update_contour():
         image = rc_utils.crop(image, (200,0), (rc.camera.get_height(),rc.camera.get_width()))
         hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
         allContours = []
-        for i in [Blue]:
+        for i in [COLOR_PRIORITY[cur]]:
             mask=cv.inRange(hsv,i[0],i[1])
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
             for j in contours:
                 allContours.append([j, i[2]])
             #cv.drawContours(hsv, contours, -1, i[1], 3)
+        if cur<len(COLOR_PRIORITY)-1:
+            for i in [COLOR_PRIORITY[cur+1]]:
+                mask=cv.inRange(hsv,i[0],i[1])
+                contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+                for j in contours:
+                    nextContours.append([j, i[2]])
+            #cv.drawContours(hsv, contours, -1, i[1], 3)
+        else:
+            pass
+            #search for cone
     largest = None
     for i in allContours:
         if cv.contourArea(i[0]) > contour_area:
             contour_area = cv.contourArea(i[0])
             contour_center=rc_utils.get_contour_center(i[0])
             largest = i[0]
+    for i in nextContours:
+        if cv.contourArea(i[0]) > ncontour_area:
+            ncontour_area = cv.contourArea(i[0])
+    if ncontour_area>1300:
+        print("switch")
+        if cur < len(COLOR_PRIORITY)-1:
+            cur+=1
+    if largest is not None:
+        rc_utils.draw_contour(image,largest)
     rc_utils.draw_circle(image, contour_center)
     rc.display.show_color_image(image)
 
@@ -106,6 +129,8 @@ def update():
     """
     global speed
     global angle
+    global pid_integral
+    global pidLastError
     global speedMult
 
     # Search for contours in the current color image
@@ -119,11 +144,10 @@ def update():
     # If we could not find a contour, keep the previous angle
     rc.drive.set_max_speed(0.75)
 
-
     # Use the triggers to control the car's speed
     rt = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)
     lt = rc.controller.get_trigger(rc.controller.Trigger.LEFT)
-    speed = rt-lt
+    speed = (rt-lt)*speedMult
     #speed = 1
 
     rc.drive.set_speed_angle(speed, angle)
@@ -138,7 +162,6 @@ def update():
             print("No contour found")
         else:
             print("Center:", contour_center, "Area:", contour_area)
-
 
 
 ########################################################################################
