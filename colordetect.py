@@ -1,46 +1,3 @@
-"""
-MIT BWSI Autonomous RACECAR
-MIT License
-racecar-neo-outreach-labs
-
-File Name: lab_e.py
-
-Title: Lab E - Stoplight Challenge
-
-Author: [PLACEHOLDER] << [Write your name or team name here]
-
-Purpose: Write a script to enable autonomous behavior from the RACECAR. When
-the RACECAR sees a stoplight object (colored cube in the simulator), respond accordingly
-by going straight, turning right, turning left, or stopping. Append instructions to the
-queue depending on whether the position of the RACECAR relative to the stoplight reaches
-a certain threshold, and be able to respond to traffic lights at consecutive intersections. 
-
-Expected Outcome: When the user runs the script, the RACECAR should control itself using
-the following constraints:
-- When the RACECAR sees a BLUE traffic light, make a right turn at the intersection
-- When the RACECAR sees an ORANGE traffic light, make a left turn at the intersection
-- When the RACECAR sees a GREEN traffic light, go straight
-- When the RACECAR sees a RED traffic light, stop moving,
-- When the RACECAR sees any other traffic light colors, stop moving.
-
-Considerations: Since the user is not controlling the RACECAR, be sure to consider the
-following scenarios:
-- What should the RACECAR do if it sees two traffic lights, one at the current intersection
-and the other at the intersection behind it?
-- What should be the constraint for adding the instructions to the queue? Traffic light position,
-traffic light area, or both?
-- How often should the instruction-adding function calls be? Once, twice, or 60 times a second?
-
-Environment: Test your code using the level "Neo Labs > Lab 3: Stoplight Challenge".
-By default, the traffic lights should direct you in a counterclockwise circle around the course.
-For testing purposes, you may change the color of the traffic light by first left-clicking to 
-select and then right clicking on the light to scroll through available colors.
-"""
-
-########################################################################################
-# Imports
-########################################################################################
-
 import sys
 import cv2 as cv
 import numpy as np
@@ -87,6 +44,7 @@ stoplight_color = "" # The current color of the stoplight
 def update_contour():
     global contour_center
     global contour_area
+    global alreadyHandled
 
     image = rc.camera.get_color_image()
 
@@ -96,7 +54,7 @@ def update_contour():
     else:
         hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
         allContours = []
-        for i in [BLUE, GREEN, PURPLE, RED]:
+        for i in [BLUE, GREEN, ORANGE, PURPLE, YELLOW, RED]:
             mask=cv.inRange(hsv,i[0],i[1])
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
             for j in contours:
@@ -112,14 +70,26 @@ def update_contour():
                 contour_center=rc_utils.get_contour_center(i[0])
                 stoplight_color = i[1]
         if contour_area > 27000 or ((stoplight_color!="blue" and stoplight_color!="orange" and stoplight_color!="green") and contour_area>23000):
-            if stoplight_color == "blue":
-                turnRight()
-            elif stoplight_color=="orange":
-                turnLeft()
-            elif stoplight_color=="green":
-                goStraight()
-            else:
-                stopNow()
+            if not alreadyHandled:
+                alreadyHandled = True
+                if stoplight_color == "blue":
+                    turnRight()
+                elif stoplight_color=="orange":
+                    turnLeft()
+                elif stoplight_color=="green":
+                    goStraight()
+                else:
+                    stopNow()
+        else:
+            alreadyHandled = False
+            if contour_area >500 and len(queue)==0:
+                queue.append([0.01,1,0])
+        # TODO Part 3: Repeat the search for all potential traffic light colors,
+        # then select the correct color of traffic light detected.
+
+        # Display the image to the screen
+        #image = rc_utils.crop(image, (0,0), (rc.camera.get_height(),rc.camera.get_width()))
+        #rc.display.show_color_image(image)
 
 # [FUNCTION] The start function is run once every time the start button is pressed
 def start():
@@ -129,6 +99,15 @@ def start():
 
     # Set update_slow to refresh every half second
     rc.set_update_slow_time(0.5)
+
+    # Print start message (You may edit this to be more informative!)
+    print(
+        ">> Lab 3 - Stoplight Challenge\n"
+        "\n"
+        "Controls:\n"
+        "   A button = print current speed and angle\n"
+        "   B button = print contour center and area"
+    )
 
 def update_slow():
     pass
@@ -156,6 +135,15 @@ def update():
             print("No contour found")
         else:
             print("Center:", contour_center, "Area:", contour_area)
+
+    if len(queue) > 0:
+        speed = queue[0][1]
+        angle = queue[0][2]
+        queue[0][0] -= rc.get_delta_time()
+        if queue[0][0] <= 0:
+            queue.pop(0)
+        # Send speed and angle commands to the RACECAR
+        rc.drive.set_speed_angle(speed, angle)
 
 # [FUNCTION] Appends the correct instructions to make a 90 degree right turn to the queue
 def turnRight():
