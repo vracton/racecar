@@ -1,11 +1,11 @@
-#   /$$$$$$                                     /$$       /$$$$$$$           /$$          
-#  /$$__  $$                                   | $$      | $$__  $$         |__/          
-# | $$  \__/  /$$$$$$  /$$$$$$  /$$$$$$$   /$$$$$$$      | $$  \ $$ /$$$$$$  /$$ /$$   /$$
-# | $$ /$$$$ /$$__  $$|____  $$| $$__  $$ /$$__  $$      | $$$$$$$//$$__  $$| $$|  $$ /$$/
-# | $$|_  $$| $$  \__/ /$$$$$$$| $$  \ $$| $$  | $$      | $$____/| $$  \__/| $$ \  $$$$/ 
-# | $$  \ $$| $$      /$$__  $$| $$  | $$| $$  | $$      | $$     | $$      | $$  >$$  $$ 
-# |  $$$$$$/| $$     |  $$$$$$$| $$  | $$|  $$$$$$$      | $$     | $$      | $$ /$$/\  $$
-#  \______/ |__/      \_______/|__/  |__/ \_______/      |__/     |__/      |__/|__/  \__/
+#   /$$$$$$                                     /$$       /$$$$$$$           /$$                               /$$$$$$$$                                        /$$    /$$$$$$ 
+#  /$$__  $$                                   | $$      | $$__  $$         |__/                              |__  $$__/                                      /$$$$   /$$__  $$
+# | $$  \__/  /$$$$$$  /$$$$$$  /$$$$$$$   /$$$$$$$      | $$  \ $$ /$$$$$$  /$$ /$$   /$$                       | $$  /$$$$$$   /$$$$$$  /$$$$$$/$$$$       |_  $$  |__/  \ $$
+# | $$ /$$$$ /$$__  $$|____  $$| $$__  $$ /$$__  $$      | $$$$$$$//$$__  $$| $$|  $$ /$$/       /$$$$$$         | $$ /$$__  $$ |____  $$| $$_  $$_  $$        | $$    /$$$$$$/
+# | $$|_  $$| $$  \__/ /$$$$$$$| $$  \ $$| $$  | $$      | $$____/| $$  \__/| $$ \  $$$$/       |______/         | $$| $$$$$$$$  /$$$$$$$| $$ \ $$ \ $$        | $$   /$$____/ 
+# | $$  \ $$| $$      /$$__  $$| $$  | $$| $$  | $$      | $$     | $$      | $$  >$$  $$                        | $$| $$_____/ /$$__  $$| $$ | $$ | $$        | $$  | $$      
+# |  $$$$$$/| $$     |  $$$$$$$| $$  | $$|  $$$$$$$      | $$     | $$      | $$ /$$/\  $$                       | $$|  $$$$$$$|  $$$$$$$| $$ | $$ | $$       /$$$$$$| $$$$$$$$
+#  \______/ |__/      \_______/|__/  |__/ \_______/      |__/     |__/      |__/|__/  \__/                       |__/ \_______/ \_______/|__/ |__/ |__/      |______/|________/
 
 import sys
 import cv2 as cv
@@ -67,7 +67,7 @@ def update_contour():
         contour_area = 0
     else:
         depthImage = rc.camera.get_depth_image()
-        image = rc_utils.crop(image, (250,0), (rc.camera.get_height(),rc.camera.get_width()))
+        image = rc_utils.crop(image, (250,0+200*initCrop), (rc.camera.get_height(),rc.camera.get_width()))
         depthImage = rc_utils.crop(depthImage, (250,0), (rc.camera.get_height(),rc.camera.get_width()))
         hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
         allContours = []
@@ -83,7 +83,12 @@ def update_contour():
                 for j in contours:
                     test.append([j, i[2]])
                     backup.append([j, i[2]])
+                    #rc_utils.draw_contour(image,j)
                 c = rc_utils.get_largest_contour(contours)
+                if c is not None:
+                    if cv.contourArea(c) > 1500 or i[0]==90:
+                        allContours = test
+                        break
         if len(allContours)==0 and len(backup)>0:
             allContours = backup
         if color=="red":
@@ -115,6 +120,7 @@ def update_contour():
     if followColor == "green":
         speedMult = 0.7*0.8/MAX_SPEED
         preserveAngle = False
+        initCrop = 0
     if contour_area < 500:
         speedMult = -1
         #print("lower")
@@ -143,6 +149,16 @@ def start():
     # Set update_slow to refresh every half second
     rc.set_update_slow_time(0.5)
 
+    # Print start message
+    print(
+        """
+   ___                  _   ___     _             _____                 _ ___ 
+  / __|_ _ __ _ _ _  __| | | _ \_ _(_)_ __  ___  |_   _|__ __ _ _ __   / |_  )
+ | (_ | '_/ _` | ' \/ _` | |  _/ '_| \ \ / |___|   | |/ -_) _` | '  \  | |/ / 
+  \___|_| \__,_|_||_\__,_| |_| |_| |_/_\_\         |_|\___\__,_|_|_|_| |_/___|
+        """
+    )
+#0.5 = 2.5, 0,3
 def update():
     """
     After start() is run, this function is run every frame until the back button

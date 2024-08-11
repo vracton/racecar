@@ -1,8 +1,28 @@
+"""
+MIT BWSI Autonomous RACECAR
+MIT License
+racecar-neo-outreach-labs
+
+File Name: test_core.py
+
+Title: Test Core
+
+Purpose: A simple program which can be used to manually test racecar_core functionality.
+"""
+
+########################################################################################
+# Imports
+########################################################################################
+
 import sys
 
 sys.path.insert(1, "../library")
 import racecar_core
 import racecar_utils as rc_utils
+
+########################################################################################
+# Global variables
+########################################################################################
 
 rc = racecar_core.create_racecar()
 
@@ -11,7 +31,15 @@ update_slow_time = 0
 show_triggers = False
 show_joysticks = False
 
+########################################################################################
+# Functions
+########################################################################################
+
+
 def start():
+    """
+    This function is run once every time the start button is pressed
+    """
     global max_speed
     global update_slow_time
     global show_triggers
@@ -81,7 +109,35 @@ def update():
     if show_joysticks:
         print(f"Left joystick: [{left_joystick}]; Right joystick: [{right_joystick}]")
 
-    
+    # Use triggers and left joystick to control car (like default drive)
+    rc.drive.set_speed_angle(right_trigger - left_trigger, left_joystick[0])
+
+    # Change max speed and update_slow time when the bumper is pressed
+    if rc.controller.was_pressed(rc.controller.Button.LB):
+        max_speed = max(1 / 16, max_speed / 2)
+        rc.drive.set_max_speed(max_speed)
+        update_slow_time *= 2
+        rc.set_update_slow_time(update_slow_time)
+        print(f"max_speed set to [{max_speed}]")
+        print(f"update_slow_time set to [{update_slow_time}] seconds")
+    if rc.controller.was_pressed(rc.controller.Button.RB):
+        max_speed = min(1, max_speed * 2)
+        rc.drive.set_max_speed(max_speed)
+        update_slow_time /= 2
+        rc.set_update_slow_time(update_slow_time)
+        print(f"max_speed set to [{max_speed}]")
+        print(f"update_slow_time set to [{update_slow_time}] seconds")
+
+    # Capture and display color images when the A button is down
+    if rc.controller.is_down(rc.controller.Button.A):
+        rc.display.show_color_image(rc.camera.get_color_image())
+
+    # Capture and display depth images when the B button is down
+    elif rc.controller.is_down(rc.controller.Button.B):
+        depth_image = rc.camera.get_depth_image()
+        rc.display.show_depth_image(depth_image)
+        depth_center_distance = rc_utils.get_depth_image_center_distance(depth_image)
+        print(f"Depth center distance: [{depth_center_distance:.2f}] cm")
 
 
 def update_slow():
