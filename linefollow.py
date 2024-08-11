@@ -48,7 +48,6 @@ def update_contour():
     global contour_center
     global contour_area
     global cur
-    global speedMult
 
     image = rc.camera.get_color_image()
     allContours = []
@@ -122,6 +121,14 @@ def start():
         "   A button = print current speed and angle\n"
         "   B button = print contour center and area"
     )
+#0.5 = 2.5, 0,3
+kP = 2.5
+kI = 0
+kD = 3
+PID_INTEGRAL_LIMIT = 1
+pid_integral = 0
+pidError = 0
+pidLastError = 0
 def update():
     """
     After start() is run, this function is run every frame until the back button
@@ -131,7 +138,6 @@ def update():
     global angle
     global pid_integral
     global pidLastError
-    global speedMult
 
     # Search for contours in the current color image
     update_contour()
@@ -143,11 +149,22 @@ def update():
     # Choose an angle based on contour_center
     # If we could not find a contour, keep the previous angle
     rc.drive.set_max_speed(0.75)
+    if contour_center is not None:
+        pidError = rc_utils.clamp(kP * (((contour_center[1]) / (rc.camera.get_width()) * 2)-1), -1, 1)#contour_center[1] - 320
+        if not kI == 0:
+            if abs(pidError) <PID_INTEGRAL_LIMIT:
+                pid_integral+=pidError
+            else:
+                pid_integral = 0
+        pidDerivative = pidError - pidLastError
+        pidLastError  = pidError
+        pidDrive = (kP * pidError) + (kI * pid_integral) + (kD * pidDerivative)
+        angle = rc_utils.clamp(pidDrive, -1, 1)
 
     # Use the triggers to control the car's speed
     rt = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)
     lt = rc.controller.get_trigger(rc.controller.Trigger.LEFT)
-    speed = (rt-lt)*speedMult
+    speed = (rt-lt)
     #speed = 1
 
     rc.drive.set_speed_angle(speed, angle)
