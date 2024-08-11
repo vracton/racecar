@@ -87,7 +87,6 @@ stoplight_color = "" # The current color of the stoplight
 def update_contour():
     global contour_center
     global contour_area
-    global alreadyHandled
 
     image = rc.camera.get_color_image()
 
@@ -97,7 +96,7 @@ def update_contour():
     else:
         hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
         allContours = []
-        for i in [BLUE, GREEN, ORANGE, PURPLE, YELLOW, RED]:
+        for i in [BLUE, GREEN, PURPLE, RED]:
             mask=cv.inRange(hsv,i[0],i[1])
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
             for j in contours:
@@ -112,7 +111,15 @@ def update_contour():
                 contour_area = cv.contourArea(i[0])
                 contour_center=rc_utils.get_contour_center(i[0])
                 stoplight_color = i[1]
-        print(stoplight_color)
+        if contour_area > 27000 or ((stoplight_color!="blue" and stoplight_color!="orange" and stoplight_color!="green") and contour_area>23000):
+            if stoplight_color == "blue":
+                turnRight()
+            elif stoplight_color=="orange":
+                turnLeft()
+            elif stoplight_color=="green":
+                goStraight()
+            else:
+                stopNow()
 
 # [FUNCTION] The start function is run once every time the start button is pressed
 def start():
@@ -149,6 +156,31 @@ def update():
             print("No contour found")
         else:
             print("Center:", contour_center, "Area:", contour_area)
+
+# [FUNCTION] Appends the correct instructions to make a 90 degree right turn to the queue
+def turnRight():
+    global queue
+    queue.append([1.35, 1, 1])
+    # TODO Part 4: Complete the rest of this function with the instructions to make a right turn
+
+# [FUNCTION] Appends the correct instructions to make a 90 degree left turn to the queue
+def turnLeft():
+    global queue
+    queue.append([1.225, 1, -1])
+    # TODO Part 5: Complete the rest of this function with the instructions to make a left turn
+
+# [FUNCTION] Appends the correct instructions to go straight through the intersectionto the queue
+def goStraight():
+    global queue
+
+    # TODO Part 6: Complete the rest of this function with the instructions to make a left turn
+
+# [FUNCTION] Clears the queue to stop all actions
+def stopNow():
+    global queue
+    queue.clear()
+    queue.append([1, -1, 0])
+    queue.append([1,0,0])
 
 ########################################################################################
 # DO NOT MODIFY: Register start and update and begin execution
