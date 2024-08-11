@@ -83,7 +83,6 @@ def update_contour():
                 for j in contours:
                     test.append([j, i[2]])
                     backup.append([j, i[2]])
-                    #rc_utils.draw_contour(image,j)
                 c = rc_utils.get_largest_contour(contours)
         if len(allContours)==0 and len(backup)>0:
             allContours = backup
@@ -111,6 +110,19 @@ def update_contour():
                 contour_center=tCenter
                 followColor = i[1]
                 largest = i[0]
+            else:
+                pass
+    if followColor == "green":
+        speedMult = 0.7*0.8/MAX_SPEED
+        preserveAngle = False
+    if contour_area < 500:
+        speedMult = -1
+        #print("lower")
+    else:
+        if followColor != "blue":
+            speedMult = 0.7*0.8/MAX_SPEED
+        else:
+            speedMult = 1
     if largest is not None:
         rc_utils.draw_contour(image,largest)
     if contour_center is not None:
