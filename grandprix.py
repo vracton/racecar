@@ -67,12 +67,24 @@ def update_contour():
         contour_area = 0
     else:
         depthImage = rc.camera.get_depth_image()
+        image = rc_utils.crop(image, (250,0), (rc.camera.get_height(),rc.camera.get_width()))
+        depthImage = rc_utils.crop(depthImage, (250,0), (rc.camera.get_height(),rc.camera.get_width()))
         hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
         allContours = []
         backup = []
         for i in COLOR_PRIORITY:
             mask=cv.inRange(hsv,i[0],i[1])
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+            if len(contours) > 0:
+                #first red so change stuff
+                if i[0][0]==0:
+                    color = "red"
+                test = []
+                for j in contours:
+                    test.append([j, i[2]])
+                    backup.append([j, i[2]])
+                    #rc_utils.draw_contour(image,j)
+                c = rc_utils.get_largest_contour(contours)
         if len(allContours)==0 and len(backup)>0:
             allContours = backup
         if color=="red":
@@ -90,12 +102,15 @@ def update_contour():
                     if cv.contourArea(c) > 1500 or i[0]==90:
                         allContours = test
     largest = None
+    followColor = None
     for i in allContours:
         tCenter = rc_utils.get_contour_center(i[0])
         if cv.contourArea(i[0]) > contour_area:
-            contour_area = cv.contourArea(i[0])
-            contour_center=tCenter
-            largest = i[0]
+            if depthImage[int(tCenter[0])][int(tCenter[1])] < 100:
+                contour_area = cv.contourArea(i[0])
+                contour_center=tCenter
+                followColor = i[1]
+                largest = i[0]
     if largest is not None:
         rc_utils.draw_contour(image,largest)
     if contour_center is not None:
