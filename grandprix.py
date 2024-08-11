@@ -21,9 +21,9 @@ GREEN = [(60,150,50), (80,255,255),"green"]  # The HSV range for the color green
 RED = [(0,150,150), (0,255,255),"red"]  # The HSV range for the color red
 
 # Color priority: Red >> Green >> Blue
-COLOR_PRIORITY = []
-MAX_SPEED = 1
-kP = 1
+COLOR_PRIORITY = [GREEN, RED, BLUE]
+MAX_SPEED = 0.6
+kP = 1.5
 
 # >> Variables
 speed = 0.0  # The current speed of the car
@@ -59,7 +59,32 @@ def update_contour():
     allContours = []
     contour_area = 0
     color = ""
-    
+    global initCrop
+    if not preserveAngle:
+        contour_center = (10,320)
+    if image is None:
+        contour_center = None
+        contour_area = 0
+    else:
+        depthImage = rc.camera.get_depth_image()
+        hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+        allContours = []
+        backup = []
+        for i in COLOR_PRIORITY:
+            mask=cv.inRange(hsv,i[0],i[1])
+            contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+    largest = None
+    for i in allContours:
+        tCenter = rc_utils.get_contour_center(i[0])
+        if cv.contourArea(i[0]) > contour_area:
+            contour_area = cv.contourArea(i[0])
+            contour_center=tCenter
+            largest = i[0]
+    if largest is not None:
+        rc_utils.draw_contour(image,largest)
+    if contour_center is not None:
+        rc_utils.draw_circle(image, contour_center)
+    rc.display.show_color_image(image)
 
 def start():
     global speed
