@@ -44,10 +44,12 @@ cur = 0
 
 # [FUNCTION] Finds contours in the current color image and uses them to update 
 # contour_center and contour_area
+speedMult = 1
 def update_contour():
     global contour_center
     global contour_area
     global cur
+    global speedMult
 
     image = rc.camera.get_color_image()
     allContours = []
@@ -67,14 +69,14 @@ def update_contour():
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
             for j in contours:
                 allContours.append([j, i[2]])
-            #cv.drawContours(hsv, contours, -1, i[1], 3)
+            cv.drawContours(hsv, contours, -1, i[1], 3)
         if cur<len(COLOR_PRIORITY)-1:
             for i in [COLOR_PRIORITY[cur+1]]:
                 mask=cv.inRange(hsv,i[0],i[1])
                 contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
                 for j in contours:
                     nextContours.append([j, i[2]])
-            #cv.drawContours(hsv, contours, -1, i[1], 3)
+            cv.drawContours(hsv, contours, -1, i[1], 3)
         else:
             pass
             #search for cone
@@ -91,6 +93,11 @@ def update_contour():
         print("switch")
         if cur < len(COLOR_PRIORITY)-1:
             cur+=1
+    if contour_area < 3000 and contour_area > 0:
+        speedMult = -1
+        print("lower")
+    else:
+        speedMult = 1
     if largest is not None:
         rc_utils.draw_contour(image,largest)
     rc_utils.draw_circle(image, contour_center)
@@ -125,7 +132,7 @@ def start():
 kP = 2.5
 kI = 0
 kD = 3
-PID_INTEGRAL_LIMIT = 1
+PID_INTEGRAL_LIMIT = 10
 pid_integral = 0
 pidError = 0
 pidLastError = 0
@@ -138,6 +145,7 @@ def update():
     global angle
     global pid_integral
     global pidLastError
+    global speedMult
 
     # Search for contours in the current color image
     update_contour()
@@ -148,7 +156,7 @@ def update():
 
     # Choose an angle based on contour_center
     # If we could not find a contour, keep the previous angle
-    rc.drive.set_max_speed(0.75)
+    rc.drive.set_max_speed(1)
     if contour_center is not None:
         pidError = rc_utils.clamp(kP * (((contour_center[1]) / (rc.camera.get_width()) * 2)-1), -1, 1)#contour_center[1] - 320
         if not kI == 0:
@@ -164,7 +172,7 @@ def update():
     # Use the triggers to control the car's speed
     rt = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)
     lt = rc.controller.get_trigger(rc.controller.Trigger.LEFT)
-    speed = (rt-lt)
+    speed = (rt-lt)*speedMult
     #speed = 1
 
     rc.drive.set_speed_angle(speed, angle)
@@ -179,15 +187,7 @@ def update():
             print("No contour found")
         else:
             print("Center:", contour_center, "Area:", contour_area)
-
-# [FUNCTION] update_slow() is similar to update() but is called once per second by
-# default. It is especially useful for printing debug messages, since printing a 
-# message every frame in update is computationally expensive and creates clutter
 def update_slow():
-    """
-    After start() is run, this function is run at a constant rate that is slower
-    than update().  By default, update_slow() is run once per second
-    """
     # Print a line of ascii text denoting the contour area and x-position
     if rc.camera.get_color_image() is None:
         # If no image is found, print all X's and don't display an image
