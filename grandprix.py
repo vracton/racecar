@@ -73,6 +73,22 @@ def update_contour():
         for i in COLOR_PRIORITY:
             mask=cv.inRange(hsv,i[0],i[1])
             contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+        if len(allContours)==0 and len(backup)>0:
+            allContours = backup
+        if color=="red":
+            mask=cv.inRange(hsv,BLUE[0],BLUE[1])
+            contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+            if len(contours) > 0:
+                #first green so change stuff
+                test = []
+                for j in contours:
+                    test.append([j, i[2]])
+                    backup.append([j, i[2]])
+                    #rc_utils.draw_contour(image,j)
+                c = rc_utils.get_largest_contour(contours)
+                if c is not None:
+                    if cv.contourArea(c) > 1500 or i[0]==90:
+                        allContours = test
     largest = None
     for i in allContours:
         tCenter = rc_utils.get_contour_center(i[0])
