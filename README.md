@@ -1,3 +1,6 @@
+![image](https://github.com/user-attachments/assets/8ddb8564-94db-4fff-b3b4-5134dc44d4a1)
+
+
 # Installation
 
 1. Install Visual Studio Code and the python extension.
